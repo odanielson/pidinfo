@@ -3,16 +3,16 @@
 package pidinfo
 
 import (
-    "os"
-    "io/ioutil"
     "fmt"
+    "io/ioutil"
+    "os"
     "strconv"
 )
 
 // ProcessInfo contains meta information for a process.
 type ProcessInfo struct {
-    Pid int
-    Cmd string
+    Pid  int
+    Cmd  string
     Args []string
 }
 
@@ -31,31 +31,31 @@ func LookupProcess(pid int) *ProcessInfo {
 // FindProcessForInode returns a ProcessInfo reference for the process that
 // owns the given inode.
 func FindProcessForInode(inode int) *ProcessInfo {
-    return scanProcessesForInode(inode);
+    return scanProcessesForInode(inode)
 }
 
 func scanProcessForInode(inode, pid int) bool {
     var inodePattern = fmt.Sprintf("socket:[%d]", inode)
-    var path = fmt.Sprintf("/proc/%d/fd/", pid);
+    var path = fmt.Sprintf("/proc/%d/fd/", pid)
     if fds, err := ioutil.ReadDir(path); err == nil {
-        for _, value := range(fds) {
+        for _, value := range fds {
             if link, err := os.Readlink(path + value.Name()); err == nil {
-                if (link==inodePattern) {
-                    return true;
+                if link == inodePattern {
+                    return true
                 }
             }
         }
     }
-    return false;
+    return false
 }
 
 func scanProcessesForInode(inode int) *ProcessInfo {
     if processes, err := ioutil.ReadDir("/proc"); err == nil {
-        for _, value := range(processes) {
+        for _, value := range processes {
             if pid, err := strconv.Atoi(value.Name()); err == nil {
                 if scanProcessForInode(inode, pid) {
-                    fmt.Printf("inode found in pid %d\n", pid);
-                    return LookupProcess(pid);
+                    fmt.Printf("inode found in pid %d\n", pid)
+                    return LookupProcess(pid)
                 }
             }
         }
