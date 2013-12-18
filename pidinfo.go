@@ -1,4 +1,5 @@
-
+// Package pidinfo implements various functions related to PID:s and
+// processes.
 package pidinfo
 
 import (
@@ -8,13 +9,15 @@ import (
     "strconv"
 )
 
+// ProcessInfo contains meta information for a process.
 type ProcessInfo struct {
     Pid int
     Cmd string
     Args []string
 }
 
-func lookupProcess(pid int) ProcessInfo {
+// LookupProcess returns a ProcessInfo reference for process given by pid.
+func LookupProcess(pid int) *ProcessInfo {
     var info ProcessInfo
     info.Pid = pid
 
@@ -22,7 +25,13 @@ func lookupProcess(pid int) ProcessInfo {
     if cmd, err := ioutil.ReadFile(cmdPath); err == nil {
         info.Cmd = string(cmd)
     }
-    return info
+    return &info
+}
+
+// FindProcessForInode returns a ProcessInfo reference for the process that
+// owns the given inode.
+func FindProcessForInode(inode int) *ProcessInfo {
+    return scanProcessesForInode(inode);
 }
 
 func scanProcessForInode(inode, pid int) bool {
@@ -40,14 +49,13 @@ func scanProcessForInode(inode, pid int) bool {
     return false;
 }
 
-func ScanProcessesForInode(inode int) *ProcessInfo {
+func scanProcessesForInode(inode int) *ProcessInfo {
     if processes, err := ioutil.ReadDir("/proc"); err == nil {
         for _, value := range(processes) {
             if pid, err := strconv.Atoi(value.Name()); err == nil {
                 if scanProcessForInode(inode, pid) {
                     fmt.Printf("inode found in pid %d\n", pid);
-                    var processInfo = lookupProcess(pid);
-                    return &processInfo
+                    return LookupProcess(pid);
                 }
             }
         }
